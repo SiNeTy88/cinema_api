@@ -1,5 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -7,7 +6,9 @@ from app.database import get_db
 from app.models import User_Model
 from app.schemas import UserCreate_Schema, UserResponse_Schema
 
-from app.core.security import get_password_hash
+from app.services import get_user_by_email, create_user
+
+from app.core.security import  verify_password, security, configx
 
 router = APIRouter(prefix="/users", tags=["Користувачі"])
 
@@ -15,26 +16,34 @@ router = APIRouter(prefix="/users", tags=["Користувачі"])
 async def register_user(
     user_data: UserCreate_Schema,
     session: AsyncSession = Depends(get_db)
-):
-    query = select(User_Model).where(User_Model.email == user_data.email)
-    result = await session.execute(query)
-    existing_user = result.scalars().first()
+) -> User_Model:
 
+    existing_user = await get_user_by_email(user_data.email, session)
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Користувач з таким email вже зареєстрований"
         )
     
-    hashed_pwd = get_password_hash(user_data.password)
-
-    new_user = User_Model(
-        email = user_data.email,
-        hashed_password = hashed_pwd
-    )
-    session.add(new_user)
-    await session.commit()
-    await session.refresh(new_user)
-
+    new_user = await create_user(user_data, session)
     return new_user
     
+    
+@router.post("/login")
+async def login_user(
+    user_data: UserCreate_Schema,
+    response: Response,
+    session: AsyncSession = Depends(get_db),
+    ):
+    existing_user = await get_user_by_email(user_data.email, session)
+
+    if not existing_user or not verify_password(user_data.password, existing_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="Невірний email або пароль"
+        )
+    token = security.create_access_token(uid=str(existing_user.id))
+
+    response.set_cookie(configx.JWT_ACCESS_COOKIE_NAME, token)
+
+    return {"access_token": token, "token_type": "bearer"}

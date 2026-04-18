@@ -7,7 +7,6 @@ from app.database import get_db
 from app.models import Movie_Session_Model, Movie_Model, Hall_Model
 from app.schemas import SessionCreate_Schema, SessionResponse_Schema
 
-
 router = APIRouter(prefix="/sessions", tags=["Сеанси"])
 
 @router.post("/")
