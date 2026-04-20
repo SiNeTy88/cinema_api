@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.database import get_db
-from app.models import Movie_Session_Model, Movie_Model, Hall_Model
 from app.schemas import SessionCreate_Schema, SessionResponse_Schema
+
+from app.services import (
+    add_movie_session,
+    get_all_movie_sessions
+)
 
 
 router = APIRouter(prefix="/sessions", tags=["Сеанси"])
@@ -14,39 +16,17 @@ router = APIRouter(prefix="/sessions", tags=["Сеанси"])
 async def movie_session_post(
     data: SessionCreate_Schema, 
     session: AsyncSession = Depends(get_db),
-    ) -> SessionResponse_Schema:
+    ) -> SessionResponse_Schema | None:
     
-    movie = await session.get(Movie_Model, data.movie_id)
-    if not movie:
-        raise HTTPException(status_code=404, detail="Фільм з таким ID не знайдено")
-    
-    hall = await session.get(Hall_Model, data.hall_id)
-    if not hall:
-        raise HTTPException(status_code=404, detail="Зал з таким ID не знайдено")
-    
-    
-    
-    movie_session = Movie_Session_Model(**data.model_dump())
-    session.add(movie_session)
-    await session.commit()
-    query = (
-        select(Movie_Session_Model)
-        .where(Movie_Session_Model.id == movie_session.id)
-        .options(
-            selectinload(Movie_Session_Model.movie),
-            selectinload(Movie_Session_Model.hall)
+    movie_session = await add_movie_session(data, session)
+    if movie_session is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Невірно введені дані"
         )
-    )
-    result = await session.execute(query)
-    return result.scalar_one()
+    return movie_session
 
 
 @router.get("/")
 async def movie_session_get_all(session: AsyncSession = Depends(get_db)) -> list[SessionResponse_Schema]:
-    query = select(Movie_Session_Model).options(
-            selectinload(Movie_Session_Model.movie),
-            selectinload(Movie_Session_Model.hall)
-    )
-    
-    result = await session.execute(query)
-    return result.scalars().all()
+    return await get_all_movie_sessions(session)

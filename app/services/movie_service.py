@@ -15,11 +15,11 @@ async def add_movie(
     await session.refresh(movie)
     return movie
 
-async def get_all_movies(session: AsyncSession) -> list[MovieResponse_Schema]:
+async def get_all_movies(session: AsyncSession) -> list[Movie_Model]:
     result = await session.execute(select(Movie_Model))
     return result.scalars().all()
 
-async def get_movie_by_id(id: int, session: AsyncSession) -> MovieResponse_Schema:
+async def get_movie_by_id(id: int, session: AsyncSession) -> Movie_Model:
     return await session.get(Movie_Model, id)
 
 

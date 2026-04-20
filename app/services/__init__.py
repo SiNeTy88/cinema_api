@@ -20,3 +20,8 @@ from .movie_service import (
     get_movie_by_id,
     delete_movie,
 )
+
+from .movie_session_service import (
+    add_movie_session,
+    get_all_movie_sessions
+)

@@ -1,8 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.models import Hall_Model
 from app.schemas import HallCreate_Schema, HallResponse_Schema
 
 from app.services import add_hall

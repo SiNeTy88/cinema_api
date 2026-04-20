@@ -16,7 +16,7 @@ router = APIRouter(prefix="/users", tags=["Користувачі"])
 async def register_user(
     user_data: UserCreate_Schema,
     session: AsyncSession = Depends(get_db)
-) -> User_Model:
+) -> UserResponse_Schema:
 
     existing_user = await get_user_by_email(user_data.email, session)
     if existing_user:

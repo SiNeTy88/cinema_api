@@ -6,7 +6,7 @@ from app.schemas import HallCreate_Schema, HallResponse_Schema
 async def add_hall(
     data: HallCreate_Schema, 
     session: AsyncSession
-    ) -> HallResponse_Schema:
+    ) -> Hall_Model:
     hall = Hall_Model(**data.model_dump())
     session.add(hall)
     await session.commit()

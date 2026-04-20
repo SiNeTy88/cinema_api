@@ -27,7 +27,7 @@ async def movie_get_all(session: AsyncSession = Depends(get_db)) -> list[MovieRe
     return await get_all_movies(session)
 
 @router.get("/{id}")
-async def movie_get_id(id: int, session: AsyncSession = Depends(get_db)) -> MovieResponse_Schema:
+async def movie_get_id(id: int, session: AsyncSession = Depends(get_db)) -> MovieResponse_Schema | None:
     movie = await get_movie_by_id(id, session)
     if movie is None:
         raise HTTPException(
