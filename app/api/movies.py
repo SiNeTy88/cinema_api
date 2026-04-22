@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.schemas import MovieCreate_Schema, MovieResponse_Schema
-from app.models import Movie_Model
+from app.models import Movie_Model , User_Model
 
 from app.services import (
     add_movie,
@@ -12,6 +12,8 @@ from app.services import (
     get_movie_by_id,
     delete_movie,
 )
+
+from app.api.dependencies import get_admin_user
 
 router = APIRouter(prefix="/movies", tags=["Фільми"])
 
@@ -37,7 +39,11 @@ async def movie_get_id(id: int, session: AsyncSession = Depends(get_db)) -> Movi
     return movie
 
 @router.delete("/{id}")
-async def movie_delete(id: int, session: AsyncSession = Depends(get_db)):
+async def movie_delete(
+    id: int, 
+    session: AsyncSession = Depends(get_db),
+    admin: User_Model = Depends(get_admin_user)
+    ):
     movie = await delete_movie(id, session)
     if not movie:
         raise HTTPException(
